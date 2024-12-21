@@ -19,7 +19,7 @@ _help() {
 _update() {
   for dir in $(ls -d ~/.aur/*); do
     if [[ $(cd $dir && git pull) != "Already up to date." ]] || [[ $1 == "-f" ]] || [[ $dir == *-git && $1 == "-g" ]]; then
-      (cd $dir && makepkg -si)
+      (cd $dir && makepkg -si ; _clean)
     fi
   done
 }
@@ -31,9 +31,8 @@ _clean() {
 
 _update_or_install() {
   for package in "$@"; do
-    cd ~/.aur/$package
-    if [[ $? -eq 0 ]]; then
-      (git pull && makepkg -si ; _clean)
+    if [[ -d "~/.aur/$package" ]]; then
+      (cd ~/.aur/$package && git pull && makepkg -si ; _clean)
     else
       (git clone https://aur.archlinux.org/$package ~/.aur/$package && cd ~/.aur/$package && makepkg -si ; _clean)
     fi
@@ -44,17 +43,17 @@ if [[ -n $1 ]]; then
   if [[ $1 == "--list" ]] || [[ $1 == "-l" ]]; then
     pacman -Qm
   elif [[ $1 == "--force" ]] || [[ $1 == "-f" ]]; then
-    (_update -f ; _clean)
+    _update -f
   elif [[ $1 == "--config" ]] || [[ $1 == "-c" ]]; then
     packages=`cat $2 | tr '\n' ' '`
     aur $packages
   elif [[ $1 == "--git" ]] || [[ $1 == "-g" ]]; then
-    (_update -g ; _clean)
+    _update -g
   elif [[ $1 == "-h" ]] || [[ $1 == "--help" ]]; then
     _help 0
   else
     _update_or_install "$@"
   fi
 else
-  (_update ; _clean)
+  _update
 fi
