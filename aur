@@ -1,0 +1,60 @@
+#!/bin/sh
+
+_help() {
+  echo "Usage: $(basename $0) [OPTIONS]"
+  echo ""
+  echo "Options:"
+  echo "  <pkg1 pkg2 ...>         Download and install/update the specified packages."
+  echo "  -g, --git               Updates all packages, including -git packages."
+  echo "  -c, --config <file>     Parse the specified config file and install/update"
+  echo "                          packages listed in it (one per line)."
+  echo "  -f, --force             Reinstall all packages, even if they are up-to-date."
+  echo "  -l, --list              List currently installed packages."
+  echo "  -h, --help              Display this help text."
+  echo "  [nothing]               Check all packages for updates."
+  echo ""
+  exit "$1"
+}
+
+_update() {
+  for dir in $(ls -d ~/.aur/*); do
+    if [[ $(cd $dir && git pull) != "Already up to date." ]] || [[ $1 == "-f" ]] || [[ $dir == *-git && $1 == "-g" ]]; then
+      (cd $dir && makepkg -si)
+    fi
+  done
+}
+
+_clean() {
+  git clean -ffxd
+  git restore .
+}
+
+_update_or_install() {
+  for package in "$@"; do
+    cd ~/.aur/$package
+    if [[ $? -eq 0 ]]; then
+      (git pull && makepkg -si ; _clean)
+    else
+      (git clone https://aur.archlinux.org/$package ~/.aur/$package && cd ~/.aur/$package && makepkg -si ; _clean)
+    fi
+  done
+}
+
+if [[ -n $1 ]]; then
+  if [[ $1 == "--list" ]] || [[ $1 == "-l" ]]; then
+    pacman -Qm
+  elif [[ $1 == "--force" ]] || [[ $1 == "-f" ]]; then
+    (_update -f ; _clean)
+  elif [[ $1 == "--config" ]] || [[ $1 == "-c" ]]; then
+    packages=`cat $2 | tr '\n' ' '`
+    aur $packages
+  elif [[ $1 == "--git" ]] || [[ $1 == "-g" ]]; then
+    (_update -g ; _clean)
+  elif [[ $1 == "-h" ]] || [[ $1 == "--help" ]]; then
+    _help 0
+  else
+    _update_or_install "$@"
+  fi
+else
+  (_update ; _clean)
+fi
