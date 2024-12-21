@@ -51,6 +51,10 @@ if [[ -n $1 ]]; then
     _update -g
   elif [[ $1 == "-h" ]] || [[ $1 == "--help" ]]; then
     _help 0
+  elif [[ $1 == -* ]]; then
+    echo "Unknown option: $1"
+    echo ""
+    _help 16
   else
     _update_or_install "$@"
   fi

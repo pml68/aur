@@ -11,11 +11,7 @@ cmd_opts=(
 )
 
 reply_aur_pkgs() {
-  pkgs=( $(find ~/.aur/ -type d -mindepth 1 -maxdepth 1) );
-  for i in "${!pkgs[@]}";
-  do
-    pkgs[$i]=$(basename "${pkgs[$i]}");
-  done;
+  pkgs=`basename -a ~/.aur/*/ | paste -d ' ' -s -`
 
-  COMPREPLY=( $(compgen -W "${pkgs[*]}" -- "$cur") )
+  COMPREPLY=( $(compgen -W "$pkgs" -- "$cur") )
 }
