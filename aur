@@ -31,8 +31,9 @@ _clean() {
 
 _update_or_install() {
   for package in "$@"; do
-    if [[ -d "~/.aur/$package" ]]; then
-      (cd ~/.aur/$package && git pull && makepkg -si ; _clean)
+    cd ~/.aur/$package
+    if [[ $? -eq 0 ]]; then
+      (git pull && makepkg -si ; _clean)
     else
       (git clone https://aur.archlinux.org/$package ~/.aur/$package && cd ~/.aur/$package && makepkg -si ; _clean)
     fi
