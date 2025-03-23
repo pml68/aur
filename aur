@@ -18,8 +18,8 @@ _help() {
 
 _update() {
   for dir in $(ls -d ~/.aur/*); do
-    if [[ $(cd $dir && git pull) != "Already up to date." ]] || [[ $1 == "-f" ]] || [[ $dir == *-git && $1 == "-g" ]]; then
-      (cd $dir && makepkg -si ; _clean)
+    if [[ $(cd "$dir" && git pull) != "Already up to date." ]] || [[ $1 == "-f" ]] || [[ "$dir" == *-git && $1 == "-g" ]]; then
+      (cd "$dir" && makepkg -si ; _clean)
     fi
   done
 }
@@ -31,34 +31,42 @@ _clean() {
 
 _update_or_install() {
   for package in "$@"; do
-    cd ~/.aur/$package
+    cd "~/.aur/$package"
     if [[ $? -eq 0 ]]; then
       (git pull && makepkg -si ; _clean)
     else
-      (git clone https://aur.archlinux.org/$package ~/.aur/$package && cd ~/.aur/$package && makepkg -si ; _clean)
+      (git clone "https://aur.archlinux.org/$package" "~/.aur/$package" && cd "~/.aur/$package" && makepkg -si ; _clean)
     fi
   done
 }
 
 if [[ -n $1 ]]; then
-  if [[ $1 == "--list" ]] || [[ $1 == "-l" ]]; then
-    pacman -Qm
-  elif [[ $1 == "--force" ]] || [[ $1 == "-f" ]]; then
-    _update -f
-  elif [[ $1 == "--config" ]] || [[ $1 == "-c" ]]; then
-    packages=`cat $2 | tr '\n' ' '`
-    aur $packages
-  elif [[ $1 == "--git" ]] || [[ $1 == "-g" ]]; then
-    _update -g
-  elif [[ $1 == "-h" ]] || [[ $1 == "--help" ]]; then
-    _help 0
-  elif [[ $1 == -* ]]; then
-    echo "Unknown option: $1"
-    echo ""
-    _help 16
-  else
-    _update_or_install "$@"
-  fi
+  case $1 in
+    --list | -l)
+      pacman -Qm
+      ;;
+    --force | -f)
+      _update -f
+      ;;
+    --config | -c)
+      packages=`cat $2 | tr '\n' ' '`
+      aur $packages
+      ;;
+    --git | -g)
+      _update -g
+      ;;
+    --help | -h)
+      _help 0
+      ;;
+    -*)
+      echo "Unknown option: $1"
+      echo ""
+      _help 16
+      ;;
+    *)
+      _update_or_install "$@"
+      ;;
+  esac
 else
   _update
 fi
