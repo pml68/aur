@@ -17,8 +17,8 @@ _aur_comp_cmd_opts=( -h --help -l --list -f --force -g --git -c --config )
 
 _aur_comp_reply_aur_pkgs ()
 {
-    pkgs=`basename -a ~/.aur/*/ | paste -d ' ' -s -`;
-    COMPREPLY=($(compgen -W "$pkgs" -- "$cur"))
+    pkgs=$(basename -a ~/.aur/*/ | paste -d ' ' -s -);
+    COMPREPLY=("$(compgen -W "$pkgs" -- "$cur")")
 }
 
 _aur_comp_reply_dirs ()
@@ -50,7 +50,7 @@ _aur_comp_reply_list ()
 {
     local IFS=', ';
     local array_list="" array_name;
-    for array_name in $@;
+    for array_name in "$@";
     do
         array_list="$array_list \${${array_name}[*]}";
     done;

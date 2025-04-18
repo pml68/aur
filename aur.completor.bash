@@ -1,3 +1,4 @@
+# shellcheck disable=SC2034
 output=aur-completion.bash
 cmd=aur
 cmd_args=@aur_pkgs
@@ -11,7 +12,7 @@ cmd_opts=(
 )
 
 reply_aur_pkgs() {
-  pkgs=`basename -a ~/.aur/*/ | paste -d ' ' -s -`
+  pkgs=$(basename -a ~/.aur/*/ | paste -d ' ' -s -)
 
-  COMPREPLY=( $(compgen -W "$pkgs" -- "$cur") )
+  COMPREPLY=( "$(compgen -W "$pkgs" -- "$cur")" )
 }
