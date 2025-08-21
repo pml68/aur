@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -eu
+
 _help() {
   echo "Usage: $(basename "$0") [OPTIONS]"
   echo ""
@@ -13,14 +15,14 @@ _help() {
   echo "  -h, --help              Display this help text."
   echo "  [nothing]               Check all packages for updates."
   echo ""
-  exit "$1"
+  exit "${1-0}"
 }
 
 _update() {
   for dir in ~/.aur/*; do
     cd "$dir" || continue
 
-    if [[ $(git pull) != "Already up to date." ]] || [[ $1 == "-f" ]] || [[ "$dir" == *-git && $1 == "-g" ]]; then
+    if [[ $(git pull) != "Already up to date." ]] || [[ "${1-}" == "-f" ]] || [[ "$dir" == *-git && "${1-}" == "-g" ]]; then
       git diff "@{1}.."
       read -p "Proceed with installation? [Y/n] " proceed
       if [[ -z "$proceed" ]] || [[ "$proceed" == "Y" ]] || [[ "$proceed" == "y" ]]; then
@@ -60,8 +62,8 @@ _update_or_install() {
   done
 }
 
-if [[ -n $1 ]]; then
-  case $1 in
+if [[ -n "${1-}" ]]; then
+  case "$1" in
     --list | -l)
       pacman -Qm
       ;;
