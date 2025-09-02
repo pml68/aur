@@ -22,12 +22,14 @@ _update() {
   for dir in ~/.aur/*; do
     cd "$dir" || continue
 
-    if [[ $(git pull) != "Already up to date." ]] || [[ "${1-}" == "-f" ]] || [[ "$dir" == *-git && "${1-}" == "-g" ]]; then
+    if [[ $(git pull) != "Already up to date." ]]; then
       git diff "@{1}.."
       read -p "Proceed with installation? [Y/n] " proceed
       if [[ -z "$proceed" ]] || [[ "$proceed" == "Y" ]] || [[ "$proceed" == "y" ]]; then
         makepkg -si ; _clean
       fi
+    elif [[ "${1-}" == "-f" ]] || [[ "$dir" == *-git && "${1-}" == "-g" ]]; then
+      makepkg -si ; _clean
     fi
   done
 }
