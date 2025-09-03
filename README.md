@@ -1,18 +1,10 @@
 # aur
 
-My AUR helper. See `aur -h`
+A small AUR helper script.
 
-## Shell completion
-
-Bash
+## Installation
 ```sh
-cp aur-completion.bash ~/.aur-completion.bash
-
-# add this line to your .bashrc
-source ~/.aur-completion.bash
+make install # may require sudo / root privileges
 ```
 
-Fish
-```sh
-cp aur.fish ~/.config/fish/completions/
-```
+This will install the `aur` binary, the `man` page and shell completions for fish and bash.
