@@ -1,96 +1,112 @@
 #!/bin/bash
+{
+  set -eu
 
-set -eu
+  version=1.0.0
 
-_help() {
-  echo "Usage: $(basename "$0") [OPTIONS]"
-  echo ""
-  echo "Options:"
-  echo "  <pkg1 pkg2 ...>         Download and install/update the specified packages."
-  echo "  -g, --git               Updates all packages, including -git packages."
-  echo "  -c, --config <file>     Parse the specified config file and install/update"
-  echo "                          packages listed in it (one per line)."
-  echo "  -f, --force             Reinstall all packages, even if they are up-to-date."
-  echo "  -l, --list              List currently installed packages."
-  echo "  -h, --help              Display this help text."
-  echo "  [nothing]               Check all packages for updates."
-  echo ""
-  exit "${1-0}"
-}
+  _help() {
+    echo "Usage: $(basename "$0") [OPTION]"
+    echo ""
+    echo "Provides basic AUR package management functionality, showing users a diff before upgrading a package."
+    echo ""
+    echo "Options:"
+    echo "  <pkg1 pkg2 ...>         Download and install/update the specified packages."
+    echo "  -g, --git               Checks all packages for updates and rebuilds all -git packages."
+    echo "  -c, --config <file>     Parse the specified config file and install/update"
+    echo "                          packages listed in it (one per line)."
+    echo "  -f, --force             Reinstall all packages, even if they are up-to-date."
+    echo "  -l, --list              List currently installed packages."
+    echo "  -h, --help              Display this help text."
+    echo "  -v, --version           Prints program version."
+    echo "  [nothing]               Check all packages for updates."
+    echo ""
+    exit "${1-0}"
+  }
 
-_update() {
-  for dir in ~/.aur/*; do
-    cd "$dir" || continue
+  _version() {
+    echo "aur $version"
+    exit 0
+  }
 
-    if [[ $(git pull) != "Already up to date." ]]; then
-      git diff "@{1}.."
-      read -p "Proceed with installation? [Y/n] " proceed
-      if [[ -z "$proceed" ]] || [[ "$proceed" == "Y" ]] || [[ "$proceed" == "y" ]]; then
-        makepkg -si ; _clean
-      fi
-    elif [[ "${1-}" == "-f" ]] || [[ "$dir" == *-git && "${1-}" == "-g" ]]; then
-      makepkg -si ; _clean
-    fi
-  done
-}
-
-_clean() {
-  git clean -ffxd
-  git restore .
-}
-
-_update_or_install() {
-  for package in "$@"; do
-    if cd ~/.aur/"$package"; then
-      local proceed=""
+  _update() {
+    for dir in ~/.aur/*; do
+      cd "$dir" || continue
 
       if [[ $(git pull) != "Already up to date." ]]; then
         git diff "@{1}.."
         read -p "Proceed with installation? [Y/n] " proceed
+        if [[ -z "$proceed" ]] || [[ "$proceed" == "Y" ]] || [[ "$proceed" == "y" ]]; then
+          makepkg -si ; _clean
+        fi
+      elif [[ "${1-}" == "-f" ]] || [[ "$dir" == *-git && "${1-}" == "-g" ]]; then
+        makepkg -si ; _clean
       fi
+    done
+  }
 
-      if [[ -z "$proceed" ]] || [[ "$proceed" == "Y" ]] || [[ "$proceed" == "y" ]]; then
-        makepkg -si ; _clean
+  _clean() {
+    git clean -ffxd
+    git restore .
+  }
+
+  _update_or_install() {
+    for package in "$@"; do
+      if cd ~/.aur/"$package"; then
+        local proceed=""
+
+        if [[ $(git pull) != "Already up to date." ]]; then
+          git diff "@{1}.."
+          read -p "Proceed with installation? [Y/n] " proceed
+        fi
+
+        if [[ -z "$proceed" ]] || [[ "$proceed" == "Y" ]] || [[ "$proceed" == "y" ]]; then
+          makepkg -si ; _clean
+        fi
+      else
+        git clone "https://aur.archlinux.org/$package" ~/.aur/"$package"
+        cd ~/.aur/"$package" || continue
+        ${EDITOR:-nvim} PKGBUILD
+        read -p "Proceed with installation? [Y/n] " proceed
+        if [[ -z "$proceed" ]] || [[ "$proceed" == "Y" ]] || [[ "$proceed" == "y" ]]; then
+          makepkg -si ; _clean
+        fi
       fi
-    else
-      git clone "https://aur.archlinux.org/$package" ~/.aur/"$package"
-      cd ~/.aur/"$package" || continue
-      ${EDITOR:-nvim} PKGBUILD
-      read -p "Proceed with installation? [Y/n] " proceed
-      if [[ -z "$proceed" ]] || [[ "$proceed" == "Y" ]] || [[ "$proceed" == "y" ]]; then
-        makepkg -si ; _clean
-      fi
-    fi
-  done
+    done
+  }
+
+  if [[ -n "${1-}" ]]; then
+    case "$1" in
+      --list | -l)
+        pacman -Qm
+        ;;
+      --force | -f)
+        _update -f
+        ;;
+      --config | -c)
+        packages=$(tr '\n' ' ' < "$2")
+        _update_or_install "$packages"
+        ;;
+      --git | -g)
+        _update -g
+        ;;
+      --help | -h)
+        _help 0
+        ;;
+      --version | -v)
+        _version
+        ;;
+      -*)
+        echo "Unknown option: $1"
+        echo ""
+        _help 16
+        ;;
+      *)
+        _update_or_install "$@"
+        ;;
+    esac
+  else
+    _update
+  fi
+
+  exit
 }
-
-if [[ -n "${1-}" ]]; then
-  case "$1" in
-    --list | -l)
-      pacman -Qm
-      ;;
-    --force | -f)
-      _update -f
-      ;;
-    --config | -c)
-      packages=$(tr '\n' ' ' < "$2")
-      _update_or_install "$packages"
-      ;;
-    --git | -g)
-      _update -g
-      ;;
-    --help | -h)
-      _help 0
-      ;;
-    -*)
-      echo "Unknown option: $1"
-      echo ""
-      _help 16
-      ;;
-    *)
-      _update_or_install "$@"
-      ;;
-  esac
-else
-  _update
-fi

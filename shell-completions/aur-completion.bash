@@ -12,13 +12,13 @@
 # shellcheck disable=2207
 # editorconfig-checker-disable
 
-_aur_comp_cmd_opts=( -h --help -l --list -f --force -g --git -c --config )
+_aur_comp_cmd_opts=( -h --help -v --version -l --list -f --force -g --git -c --config )
 
 
 _aur_comp_reply_aur_pkgs ()
 {
     pkgs=$(basename -a ~/.aur/*/ | paste -d ' ' -s -);
-    COMPREPLY=("$(compgen -W "$pkgs" -- "$cur")")
+    COMPREPLY=($(compgen -W "$pkgs" -- "$cur"))
 }
 
 _aur_comp_reply_dirs ()
@@ -69,7 +69,7 @@ _aur_comp_reply_set() {
   local IFS=', '
   local array_list="" array_name
   # shellcheck disable=2068
-  for array_name in $@; do
+  for array_name in "$@"; do
     array_list="$array_list \${_aur_comp_var_${array_name}[*]}"
   done
   array_list="${array_list[*]:1}"

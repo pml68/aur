@@ -1,10 +1,11 @@
 function _aur_no_switches
-  not __fish_contains_opt -s h help -s l list -s f force -s g git -s c config
+  not __fish_contains_opt -s h help -s v version -s l list -s f force -s g git -s c config
 end
 
 complete -c aur -f
 complete -c aur -n "_aur_no_switches" -a "(basename -a ~/.aur/*/)"
 complete -c aur -s h -l help
+complete -c aur -s v -l version
 complete -c aur -s l -l list
 complete -c aur -s f -l force
 complete -c aur -s g -l git
