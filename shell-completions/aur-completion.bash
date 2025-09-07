@@ -12,7 +12,7 @@
 # shellcheck disable=2207
 # editorconfig-checker-disable
 
-_aur_comp_cmd_opts=( -h --help -v --version -l --list -f --force -g --git -c --config )
+_aur_comp_cmd_opts=( -h --help -v --version -l --list -f --force -g --git -c --config -r --remove )
 
 
 _aur_comp_reply_aur_pkgs ()
@@ -59,6 +59,12 @@ _aur_comp_reply_list ()
     eval "COMPREPLY=( \$(compgen -W \"$array_list\" -- \"\$cur\") )"
 }
 
+_aur_comp_reply_pacman ()
+{
+    pkgs=$(pacman -Qqm | paste -d ' ' -s -);
+    COMPREPLY=($(compgen -W "$pkgs" -- "$cur"))
+}
+
 _aur_comp_reply_words ()
 {
     local IFS=$'\n';
@@ -95,6 +101,8 @@ _aur_completions() {
       # rely the value of command option
       -c) _aur_comp_reply_files ;;
       --config) _aur_comp_reply_files ;;
+      -r) _aur_comp_reply_pacman ;;
+      --remove) _aur_comp_reply_pacman ;;
       *) _aur_comp_reply_aur_pkgs ;;
     esac
   else

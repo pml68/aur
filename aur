@@ -1,6 +1,7 @@
 #!/bin/bash
 {
   set -eu
+  [[ -n ${AUR_DEBUG-} ]] && set -x
 
   version=1.0.0
 
@@ -10,15 +11,16 @@
     echo "Provides basic AUR package management functionality, showing users a diff before upgrading a package."
     echo ""
     echo "Options:"
-    echo "  <pkg1 pkg2 ...>         Download and install/update the specified packages."
-    echo "  -g, --git               Checks all packages for updates and rebuilds all -git packages."
-    echo "  -c, --config <file>     Parse the specified config file and install/update"
-    echo "                          packages listed in it (one per line)."
-    echo "  -f, --force             Reinstall all packages, even if they are up-to-date."
-    echo "  -l, --list              List currently installed packages."
-    echo "  -h, --help              Display this help text."
-    echo "  -v, --version           Prints program version."
-    echo "  [nothing]               Check all packages for updates."
+    echo "  <pkg1 pkg2 ...>                  Download and install/update the specified packages."
+    echo "  -r, --remove <pkg1 pkg2 ...>     Remove the specified packages. Runs pacman -Rns"
+    echo "  -g, --git                        Checks all packages for updates and rebuilds all -git packages."
+    echo "  -c, --config <file>              Parse the specified config file and install/update"
+    echo "                                   packages listed in it (one per line)."
+    echo "  -f, --force                      Reinstall all packages, even if they are up-to-date."
+    echo "  -l, --list                       List currently installed packages."
+    echo "  -h, --help                       Display this help text."
+    echo "  -v, --version                    Prints program version."
+    echo "  [nothing]                        Check all packages for updates."
     echo ""
     exit "${1-0}"
   }
@@ -74,6 +76,20 @@
     done
   }
 
+  _remove() {
+    for package in "$@"; do
+      if pacman -Qi "$package"; then
+        if [[ -d ~/.aur/"$package" ]]; then
+          read -p "Removing ~/.aur/$package. Continue? [Y/n] " proceed
+          if [[ -z "$proceed" ]] || [[ "$proceed" == "Y" ]] || [[ "$proceed" == "y" ]]; then
+            rm -rf ~/.aur/"$package"
+          fi
+        fi
+        sudo pacman -Rns "$package"
+      fi
+    done
+  }
+
   if [[ -n "${1-}" ]]; then
     case "$1" in
       --list | -l)
@@ -94,6 +110,10 @@
         ;;
       --version | -v)
         _version
+        ;;
+      --remove | -r)
+        shift
+        _remove "$@"
         ;;
       -*)
         echo "Unknown option: $1"

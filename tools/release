@@ -1,0 +1,13 @@
+#!/bin/bash
+
+if [[ -n "$1" ]]; then
+  set -xe
+  sed -i "s/version=.*/version=$1/" ./aur
+  make -B
+  git add .
+  git commit -m "chore: bump version"
+  git tag -a "v$1" -m "aur v$1"
+else
+  echo "No version argument passed."
+  exit 1
+fi
