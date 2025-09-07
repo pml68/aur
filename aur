@@ -3,7 +3,7 @@
   set -eu
   [[ -n ${AUR_DEBUG-} ]] && set -x
 
-  version=1.0.0
+  version=1.1.0
 
   _help() {
     echo "Usage: $(basename "$0") [OPTION]"
